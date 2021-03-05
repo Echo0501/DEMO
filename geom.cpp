@@ -197,74 +197,48 @@ void cals_intersect_ray_tri(const struct ray_t RAY, const struct triangle_t * TR
 void ray_box(const struct ray_t RAY, const struct bound_box_t Box, float * tMin, float * tMax) {	
 	// Determine if RAY hits bound box
 	
-	*tMin = -10000000.0f;
-	*tMax = 10000000.0f;
+	float t1 = (Box.A.x - RAY.Origin.x) / RAY.Direction.x;
+	float t2 = (Box.B.x - RAY.Origin.x) / RAY.Direction.x;
 	
-	// CALCULATE X-AXIS INTERSECTION
-	if (RAY.Direction.x == 0.0) {
-		if (RAY.Origin.x < Box.A.x || RAY.Origin.x > Box.B.x) {
-			// Misses Box of Obj
-			*tMin = 10000000.0f;
-			*tMax = -10000000.0f;
-			return;
-		}
+	float t3 = (Box.A.y - RAY.Origin.y) / RAY.Direction.y;
+	float t4 = (Box.B.y - RAY.Origin.y) / RAY.Direction.y;
+	
+	float t5 = (Box.A.z - RAY.Origin.z) / RAY.Direction.z;
+	float t6 = (Box.B.z - RAY.Origin.z) / RAY.Direction.z;
+	
+	float tmpMin;
+	float tmpMax;
+	
+	if (t1 < t2) {
+		tmpMin = t1;
+		tmpMax = t2;
+	}else {
+		tmpMin = t2;
+		tmpMax = t1;
+	}
+	if (t3 < t4) {
+		if (t3 > tmpMin) tmpMin = t3;
+		if (t4 < tmpMax) tmpMax = t4;
 	} else {
-		
-		float t1 = (Box.A.x - RAY.Origin.x) / RAY.Direction.x;
-		float t2 = (Box.B.x - RAY.Origin.x) / RAY.Direction.x;
-		
-		if (t1 < t2) {
-			if (t2 < *tMax) *tMax = t2;
-			if (t1 > *tMin) *tMin = t1;	
-		} else {
-			if (t1 < *tMax) *tMax = t1;
-			if (t2 > *tMin) *tMin = t2;
-		}
+		if (t4 > tmpMin) tmpMin = t4;
+		if (t3 < tmpMax) tmpMax = t3;
+	}
+	if (t5 < t6) {
+		if (t5 > tmpMin) tmpMin = t5;
+		if (t6 < tmpMax) tmpMax = t6;
+	} else {
+		if (t6 > tmpMin) tmpMin = t6;
+		if (t5 < tmpMax) tmpMax = t5;
 	}
 	
-	// CALCULATE Y-AXIS INTERSECTION
-	if (RAY.Direction.y == 0.0) {
-		if (RAY.Origin.y < Box.A.y || RAY.Origin.y > Box.B.y) {
-			// Misses Box of Obj
-			*tMin = 10000000.0f;
-			*tMax = -10000000.0f;
-			return;
-		}
+	if (tmpMax > 0.0 && tmpMin < tmpMax) {
+		*tMin = tmpMin;
+		*tMax = tmpMax;
 	} else {
-		
-		float t1 = (Box.A.y - RAY.Origin.y) / RAY.Direction.y;
-		float t2 = (Box.B.y - RAY.Origin.y) / RAY.Direction.y;
-		
-		if (t1 < t2) {
-			if (t2 < *tMax) *tMax = t2;
-			if (t1 > *tMin) *tMin = t1;	
-		} else {
-			if (t1 < *tMax) *tMax = t1;
-			if (t2 > *tMin) *tMin = t2;
-		}
+		*tMin = 100000.0;
+		*tMax = -1000000.0;
 	}
 	
-	// CALCULATE Z-AXIS INTERSECTION
-	if (RAY.Direction.z == 0.0) {
-		if (RAY.Origin.z < Box.A.z || RAY.Origin.z > Box.B.z) {
-			// Misses Box of Obj
-			*tMin = 10000000.0f;
-			*tMax = -10000000.0f;
-			return;
-		}
-	} else {
-		
-		float t1 = (Box.A.z - RAY.Origin.z) / RAY.Direction.z;
-		float t2 = (Box.B.z - RAY.Origin.z) / RAY.Direction.z;
-		
-		if (t1 < t2) {
-			if (t2 < *tMax) *tMax = t2;
-			if (t1 > *tMin) *tMin = t1;	
-		} else {
-			if (t1 < *tMax) *tMax = t1;
-			if (t2 > *tMin) *tMin = t2;
-		}
-	}
 }
 
 struct rayboxtmp_t {
@@ -275,8 +249,11 @@ struct rayboxtmp_t {
 bool compar(const struct rayboxtmp_t A, const struct rayboxtmp_t B) {
 	return A.min_dist < B.min_dist;
 }
-
-
+/*
+int compar(const void * A, const void * B) {
+	return ((struct rayboxtmp_t *) A)->min_dist < ((struct rayboxtmp_t *) B)->min_dist;
+}
+*/
 // Calculates the best intersetion between obj_t and a ray.
 void cals_intersect_ray_obj(const struct ray_t RAY, const struct obj_t * OBJ, float * dist, unsigned int * color) {
 	

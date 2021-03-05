@@ -1,6 +1,6 @@
 
 CC = gcc
-CFLAGS = -Wall -O3 -pg
+CFLAGS = -Wall -pg -O3
 
 
 all: main

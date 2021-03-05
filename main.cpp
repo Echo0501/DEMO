@@ -40,7 +40,7 @@ float LOOK_SPEED = (M_PI * 0.025f);
 
 // Multi Thread stuff
 pthread_t * workers;
-unsigned long THREAD_COUNT = 4;
+unsigned long THREAD_COUNT = 6;
 #define THREAD_STEP (VERTICAL_RESOLUTION / THREAD_COUNT)
 
 struct render_t {
@@ -59,7 +59,7 @@ void *partial_render(void *varg) {
 	for (unsigned long y = starty; y < endy; y++) {
 		for (unsigned long x = 0; x < HORIZONTAL_RESOLUTION; x++) {
 			
-			float yaw = ((HORIZONTAL_RESOLUTION - 1) * 0.5f - (float) x) * (hFOV / HORIZONTAL_RESOLUTION);
+			float yaw = ((float) x - (HORIZONTAL_RESOLUTION - 1) * 0.5f) * (hFOV / HORIZONTAL_RESOLUTION);
 			float pitch = ((float) y - (VERTICAL_RESOLUTION - 1) * 0.5f) * (vFOV / VERTICAL_RESOLUTION);
 
 			struct vec_t axis = vec_normalize(vec_add(vec_scale(camera_up, yaw), vec_scale(camera_right, pitch)));
@@ -109,9 +109,9 @@ int main(void) {
 	
 	
 	struct world_t WORLD = make_world(
-		(struct vec_t){0.0,0.0,0.0}, 		// MIN
-		(struct vec_t){50.0,50.0,50.0}, 	// MAX
-		5, 0.5f);	// Depth, Threshold
+		(struct vec_t){-25.0, -25.0, -25.0}, 		// MIN
+		(struct vec_t){25.0, 25.0, 25.0}, 	// MAX
+		6, 0.0f);	// Depth, Threshold
 	for(unsigned long k = 0; k < WORLD.size; k++) {
 		for(unsigned long j = 0; j < WORLD.size; j++) {
 			for(unsigned long i = 0; i < WORLD.size; i++) {
@@ -121,7 +121,7 @@ int main(void) {
 				float y = ((float)j / (float)WORLD.size);
 				float z = ((float)k / (float)WORLD.size);
 				
-				WORLD.map[i][j][k] = (1.0 + N.eval(x * scalar.x, y * scalar.y, z * scalar.z)) / 2.0;
+				WORLD.map[i][j][k] = N.eval(x * scalar.x, y * scalar.y, z * scalar.z);
 				//WORLD.map[i][j][k] = 0.0f;
 				
 			}
@@ -278,16 +278,16 @@ int main(void) {
 			axis = vec_add(axis, camera_right);
 		}
 		if (look_left) {
-			axis = vec_add(axis, camera_up);
-		}
-		if (look_right) {
 			axis = vec_sub(axis, camera_up);
 		}
+		if (look_right) {
+			axis = vec_add(axis, camera_up);
+		}
 		if (roll_right) {
-			axis = vec_add(axis, camera_look);
+			axis = vec_sub(axis, camera_look);
 		}
 		if (roll_left) {
-			axis = vec_sub(axis, camera_look);
+			axis = vec_add(axis, camera_look);
 		}
 		if (vec_mag(axis) > 0.001f) {
 			axis = vec_normalize(axis);
@@ -305,10 +305,10 @@ int main(void) {
 			move_step = vec_sub(move_step, camera_look);
 		}
 		if (move_right) {
-			move_step = vec_sub(move_step, camera_right);
+			move_step = vec_add(move_step, camera_right);
 		}
 		if (move_left) {
-			move_step = vec_add(move_step, camera_right);
+			move_step = vec_sub(move_step, camera_right);
 		}
 		if (move_up) {
 			move_step = vec_add(move_step, camera_up);

@@ -23,6 +23,17 @@ struct triangle_t {
 	unsigned int color;
 };
 
+struct world_t {
+	struct vec_t min;
+	struct vec_t max;
+	
+	unsigned long depth;
+	
+	unsigned long size;
+	float *** map;
+	
+	float T;
+};
 
 struct obj_t {
 	
@@ -36,17 +47,6 @@ struct obj_t {
 	
 };
 
-struct world_t {
-	struct vec_t min;
-	struct vec_t max;
-	
-	unsigned long depth;
-	
-	unsigned long size;
-	float *** map;
-	
-	float T;
-};
 
 struct world_t make_world(struct vec_t min, struct vec_t max, unsigned long depth, float T);
 void free_world(struct world_t WORLD);

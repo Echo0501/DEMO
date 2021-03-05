@@ -7,6 +7,21 @@
 /*
 For Marching Cubes:
 */
+
+
+#define AB ((struct vec_t) {(T-A)/(B-A), 0.0, 0.0})
+#define AC ((struct vec_t) {0.0, (T-A)/(C-A), 0.0})
+#define AE ((struct vec_t) {0.0, 0.0, (T-A)/(E-A)})
+#define BD ((struct vec_t) {1.0, (T-B)/(D-B), 0.0})
+#define BF ((struct vec_t) {1.0, 0.0, (T-B)/(F-B)})
+#define CD ((struct vec_t) {(T-C)/(D-C), 1.0, 0.0})
+#define CG ((struct vec_t) {0.0, 1.0, (T-C)/(G-C)})
+#define DH ((struct vec_t) {1.0, 1.0, (T-D)/(H-D)})
+#define EF ((struct vec_t) {(T-E)/(F-E), 0.0, 1.0})
+#define EG ((struct vec_t) {0.0, (T-E)/(G-E), 1.0})
+#define FH ((struct vec_t) {1.0, (T-F)/(H-F), 1.0})
+#define GH ((struct vec_t) {(T-G)/(H-G), 1.0, 1.0})
+
 void marching_cube(float A, float B, float C, float D, 
 				   float E, float F, float G, float H, 
 				   float T,
@@ -22,19 +37,6 @@ void marching_cube(float A, float B, float C, float D,
 	if (G > T) cube_index += 0x80;
 	if (H > T) cube_index += 0x40;
 	
-	struct vec_t AB = {(T-A)/(B-A), 0.0, 0.0};
-	struct vec_t AC = {0.0, (T-A)/(C-A), 0.0};
-	struct vec_t AE = {0.0, 0.0, (T-A)/(E-A)};
-	struct vec_t BD = {1.0, (T-B)/(D-B), 0.0};
-	struct vec_t BF = {1.0, 0.0, (T-B)/(F-B)};
-	struct vec_t CD = {(T-C)/(D-C), 1.0, 0.0};
-	struct vec_t CG = {0.0, 1.0, (T-C)/(G-C)};
-	struct vec_t DH = {1.0, 1.0, (T-D)/(H-D)};
-	struct vec_t EF = {(T-E)/(F-E), 0.0, 1.0};
-	struct vec_t EG = {0.0, (T-E)/(G-E), 1.0};
-	struct vec_t FH = {1.0, (T-F)/(H-F), 1.0};
-	struct vec_t GH = {(T-G)/(H-G), 1.0, 1.0};
-
 	switch (cube_index) {
 		case 0x00:
 			*tri_count = 0;
