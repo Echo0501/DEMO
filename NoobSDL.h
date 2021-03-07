@@ -1,8 +1,11 @@
-/*
+/**
  * Header file for NoobSDL
  * 
- * Call init with sizes.
- * Write pixels with draw_pixel
+ * Made by Duncan McCloud
+ * duncmccl@udel.edu
+ * 
+ * Call init with size of window, and resolution.
+ * Write pixels with draw_pixel()
  * then call render_NoobSDL()
  * 
  */

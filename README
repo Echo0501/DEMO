@@ -1,0 +1,58 @@
+This is a ray tracing project by Duncan McCloud
+
+If you have any questions reguarding anything in this project
+	such as formuas or functions and what not,
+	Email me at duncmccl@udel.edu
+
+
+
+The program functions generally by:
+
+SETUP
+
+	Making a world_t 
+		from
+			min -> 3d float vector for position in space
+			max -> 3d float vector for position in space
+			depth -> determines the size of the 3d float array that represents the world
+			threshold -> value at which to make triangle mesh. usually 0, can be any value
+		works by
+			making a 3d array with dimensional size of 1 << (depth + 1)
+			This ensures that there is enough points for matching cubes
+			And evenly divisable into an Oct tree
+	
+	Filling 3d world array with values from OpenSimplexNoise
+	
+	Making obj_t from world.
+		obj_t is a oct tree structure, containing a triangle mesh that represents the world
+		This is used to optimize the ray tracing algorithm
+	
+	Init GUI window
+	
+	setup muti threading
+	
+MAIN LOOP
+	
+	input handling
+		
+	moving and looking around the camera data
+		
+	clear screen to black
+		
+	render
+		
+	when main loop exits, cleanup
+
+RENDERING is done by calculating rays based on Field of View (FOV), and Resolution (RES)
+Casting these rays agains an obj_t
+
+	Calculate distance to obj_t's axis aligned bounding box
+	
+	cast against children (more smaller obj_t) recursivly
+		Sort children, closest first, to optimize ray tracing
+		If intersection is found, don't check anything behind it (dist > best_dist -> no check)
+	
+	cast against content (triangles)
+		returns a distance, and a color of the triangle.
+		the color is gray, but made darker based on the angle of the triangle
+		this simulates a light eminating from the camera

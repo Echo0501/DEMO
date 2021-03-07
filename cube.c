@@ -1,3 +1,8 @@
+/**
+ * Made by Duncan McCloud
+ * duncmccl@udel.edu
+ */
+
 #include <stdlib.h>
 
 #include "vec.h"
@@ -5,10 +10,23 @@
 #include "cube.h"
 
 /*
-For Marching Cubes:
+For Marching Cubes algorithm
+Generates triangles at the values of T
+	with linear interpolation
+
+	 X, Y, Z
+A = [0, 0, 0]
+B = [1, 0, 0]
+C = [0, 1, 0]
+D = [1, 1, 0]
+E = [0, 0, 1]
+F = [1, 0, 1]
+G = [0, 1, 1]
+H = [1, 1, 1]
+
 */
 
-
+// Points between corners
 #define AB ((struct vec_t) {(T-A)/(B-A), 0.0, 0.0})
 #define AC ((struct vec_t) {0.0, (T-A)/(C-A), 0.0})
 #define AE ((struct vec_t) {0.0, 0.0, (T-A)/(E-A)})

@@ -1,7 +1,8 @@
-
 CC = gcc
 CFLAGS = -Wall -O3
-
+# Add -pg for profiling data, and remove -O3 because it kinda hides functions
+# profiler generates output of gmon.out, it can be proccessed into text with command:
+# gprof -b main gmon.out > prof.txt
 
 all: main
 

@@ -1,3 +1,8 @@
+/**
+ * Made by Duncan McCloud
+ * duncmccl@udel.edu
+ */
+
 #include <stdlib.h>
 #include <float.h>
 #include <stdio.h>
@@ -8,7 +13,8 @@
 #include "geom.h"
 #include "cube.h"
 
-
+// Makes a world from min, and max positions, a depth, and a threashold value
+// Most of these values are used later
 struct world_t make_world(struct vec_t min, struct vec_t max, unsigned long depth, float T) {
 	struct world_t rtn = (struct world_t) {min, max, depth, (unsigned long)((1 << depth) + 1), NULL, T};
 	rtn.map = (float ***) malloc(sizeof(float **) * rtn.size);
@@ -24,6 +30,7 @@ struct world_t make_world(struct vec_t min, struct vec_t max, unsigned long dept
 	return rtn;
 }
 
+// Frees a world
 void free_world(struct world_t WORLD) {
 	
 	for(unsigned long i = 0; i < WORLD.size; i++) {
@@ -35,7 +42,7 @@ void free_world(struct world_t WORLD) {
 	free(WORLD.map);
 }
 
-
+// Makes an obj_t using min, max positions, a map of values, and x, y, z indexies
 struct obj_t make_obj(struct vec_t min, struct vec_t max, float *** map, float T, unsigned long depth, 
 			unsigned long x, unsigned long y, unsigned long z) {
 	
@@ -111,6 +118,7 @@ struct obj_t make_obj(struct vec_t min, struct vec_t max, float *** map, float T
 
 }
 
+// frees a obj_t
 void free_obj(struct obj_t OBJ) {
 	
 	if(OBJ.children_count > 0) {
@@ -124,8 +132,7 @@ void free_obj(struct obj_t OBJ) {
 	}
 }
 
-
-
+// makes a color darker by using color_scale value
 unsigned int shadow_color(const unsigned int color, const float color_scale) {
 
 	float a = (float)((color >> 24) & 0xFF) * color_scale;
@@ -138,7 +145,8 @@ unsigned int shadow_color(const unsigned int color, const float color_scale) {
 }
 
 
-
+// Calculates if a ray intersects with a triangle.
+// if it does, and it is closer than current value if dist, write new values in
 void cals_intersect_ray_tri(const struct ray_t RAY, const struct triangle_t * TRI, float * dist, unsigned int * color) {
 	
 	// Calc intersect between Ray and triangle
@@ -155,8 +163,6 @@ void cals_intersect_ray_tri(const struct ray_t RAY, const struct triangle_t * TR
 	N.x *= nMag;
 	N.y *= nMag;
 	N.z *= nMag;
-	
-	
 	
 	// Check if ray hits outside of triangle
 	float nn = ((N.x * RAY.Direction.x) + (N.y * RAY.Direction.y) + (N.z * RAY.Direction.z));
@@ -189,8 +195,8 @@ void cals_intersect_ray_tri(const struct ray_t RAY, const struct triangle_t * TR
 	}
 }
 
-
-
+// Calcualtes the distance between the intersect of a Ray and a box.
+// Writes the values into tMin, and tMax
 void ray_box(const struct ray_t RAY, const struct bound_box_t Box, float * tMin, float * tMax) {	
 	// Determine if RAY hits bound box
 	
@@ -238,6 +244,9 @@ void ray_box(const struct ray_t RAY, const struct bound_box_t Box, float * tMin,
 	
 }
 
+// Struct to record the distances between a ray and a box, 
+// along with the index of that box in an obj.
+// This struct is only used in calc_intersect_ray_obj;
 struct rayboxtmp_t {
 	int index;
 	float min_dist;
@@ -246,6 +255,8 @@ struct rayboxtmp_t {
 	struct rayboxtmp_t * left;
 	struct rayboxtmp_t * right;
 };
+
+// This function sorts a list of ray box intersects, closest first, with quick sort
 void raybox_sort(struct rayboxtmp_t * dist_list, const int num) {
 	if (num <= 1) return;
 	int i = 0;
@@ -261,7 +272,10 @@ void raybox_sort(struct rayboxtmp_t * dist_list, const int num) {
 	raybox_sort(dist_list, i);
 	raybox_sort(dist_list + (i + 1), num - (i + 1));
 }
+
 // Calculates the best intersetion between obj_t and a ray.
+// Recursive call to either more calc_ray_obj, or calc_ray_triangle
+// Returns values by writting them to pointers, dist and color.
 void cals_intersect_ray_obj(const struct ray_t RAY, const struct obj_t * OBJ, float * dist, unsigned int * color) {
 	
 	if (OBJ->children_count > 0) {
@@ -290,5 +304,4 @@ void cals_intersect_ray_obj(const struct ray_t RAY, const struct obj_t * OBJ, fl
 			cals_intersect_ray_tri(RAY, OBJ->content + i, dist, color);
 		}
 	}
-	
 }

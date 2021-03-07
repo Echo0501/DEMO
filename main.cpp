@@ -1,3 +1,8 @@
+/**
+ * Made by Duncan McCloud
+ * duncmccl@udel.edu
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <float.h>
@@ -81,7 +86,7 @@ void *partial_render(void *varg) {
 	pthread_exit(NULL);
 }
 
-
+// Counts the number of triangles in an obj_t
 void count_tri(struct obj_t obj, unsigned long * sum) {
 	
 	for(unsigned long i = 0; i < obj.children_count; i++) {
@@ -94,8 +99,6 @@ void count_tri(struct obj_t obj, unsigned long * sum) {
 
 int main(void) {
 	
-	//srand(time(NULL));
-	
 	printf("Hello, World!\n");
 	
 	
@@ -103,20 +106,23 @@ int main(void) {
 	// World Data  //
 	// - - - - - - //
 	
-	// Random World Values data stuff
+	// OpenSimplexNoise, for noisey world
+	// This is the only cpp I've used, and only reason for me making main a .cpp file
 	OpenSimplexNoise::Noise N = OpenSimplexNoise::Noise(time(NULL));
 	struct vec_t scalar = {10.0, 10.0, 10.0};
 	
-	
+	// Make the world!
 	struct world_t WORLD = make_world(
 		(struct vec_t){-25.0, -25.0, -25.0}, 		// MIN
 		(struct vec_t){25.0, 25.0, 25.0}, 	// MAX
 		6, 0.0f);	// Depth, Threshold
+	
+	// Fill the world!
 	for(unsigned long k = 0; k < WORLD.size; k++) {
 		for(unsigned long j = 0; j < WORLD.size; j++) {
 			for(unsigned long i = 0; i < WORLD.size; i++) {
 				
-				// Determine normalized xyz
+				// Determine xyz world coords from indexies
 				float x = ((float)i / (float)WORLD.size);
 				float y = ((float)j / (float)WORLD.size);
 				float z = ((float)k / (float)WORLD.size);
@@ -128,6 +134,9 @@ int main(void) {
 		}
 	}
 	
+	// Make obj_t octtree to contain tiangle mesh of the world
+	// Can be updated for every frame, although it only needs to be updated
+	// when changes happen
 	struct obj_t BOOM = make_obj(WORLD.min, WORLD.max, WORLD.map, WORLD.T, WORLD.depth, 0, 0, 0);
 	unsigned long tri_count = 0;
 	count_tri(BOOM, &tri_count);
@@ -135,10 +144,7 @@ int main(void) {
 	//free_obj(BOOM);
 	
 	
-	
-	
-	
-	
+	// Make window
 	if (init_NoobSDL(512, 512, hRes, vRes, "Demo Window")) {
 		// if init has an error, exit program.
 		return 1;
@@ -152,7 +158,7 @@ int main(void) {
 	struct render_t * render_args = (struct render_t *) malloc(sizeof(struct render_t) * THREAD_COUNT);
 	
 	
-	
+	// Values for input handling
 	char loop = 1;
 	char update_world = 0;
 	
@@ -372,19 +378,18 @@ int main(void) {
 		*/
 		
 		
-		
+		// Render to screen
 		render_NoobSDL();
 		
 		
 	}
 	
-	
+	// Cleanup and program exit
 	free(render_args);
 	free(workers);
+	quit_NoobSDL();
 	free_obj(BOOM);
 	free_world(WORLD);
-	
-	quit_NoobSDL();
 	
 	return 0;
 }

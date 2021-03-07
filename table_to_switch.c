@@ -1,7 +1,15 @@
+/**
+ * Made by Duncan McCloud
+ * duncmccl@udel.edu
+ */
+
 #include <stdio.h>
 
 // Table from 'Polygonising a scalar field' By Paul Bourke
 // http://paulbourke.net/geometry/polygonise/
+// This program simply converts the tables to a MASSIVE switch case
+// Because I wanted to use a switch case instead of looping through the list.
+
 static unsigned char aCases[256][16]={
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 	{0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},

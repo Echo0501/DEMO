@@ -1,4 +1,7 @@
-/* NoodSDL.c */
+/**
+ * Made by Duncan McCloud
+ * duncmccl@udel.edu
+ */
 
 
 #include <SDL2/SDL.h>
@@ -6,7 +9,7 @@
 
 
 
-/** Init and Quit Functions **/
+/* Init Function */
 
 int init_NoobSDL(const size_t window_width, const size_t window_height, 
 				 const size_t horizontal_resolution, const size_t vertical_resolution,
@@ -72,7 +75,7 @@ int init_NoobSDL(const size_t window_width, const size_t window_height,
 	return 0;
 }
 
-
+/* Quit function, does garbage cleanup */
 void quit_NoobSDL() {
 	// Cleanup and Exit
 	SDL_UnlockTexture(TEXTURE_BUFFER);
@@ -83,7 +86,7 @@ void quit_NoobSDL() {
 }
 
 
-/** Render and Draw functions **/
+/* Render funciton, Draws texture buffer data to the window */
 
 void render_NoobSDL() {
 	
@@ -102,11 +105,13 @@ void render_NoobSDL() {
 }
 
 
+/* Used to draw color to pixel at x,y */
 void draw_pixel(const size_t x, const size_t y, const unsigned int color) {
 	size_t z = HORIZONTAL_RESOLUTION * y + x;
 	PIX_BUF[z] = color;
 }
 
+/* Draw every pixel to color */
 void clear_screen(const unsigned int color) {
 	
 	size_t z = 0;
