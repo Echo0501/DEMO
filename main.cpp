@@ -40,7 +40,7 @@ float LOOK_SPEED = (M_PI * 0.025f);
 
 // Multi Thread stuff
 pthread_t * workers;
-unsigned long THREAD_COUNT = 6;
+unsigned long THREAD_COUNT = 4;
 #define THREAD_STEP (VERTICAL_RESOLUTION / THREAD_COUNT)
 
 struct render_t {
@@ -94,7 +94,7 @@ void count_tri(struct obj_t obj, unsigned long * sum) {
 
 int main(void) {
 	
-	srand(time(NULL));
+	//srand(time(NULL));
 	
 	printf("Hello, World!\n");
 	
@@ -132,7 +132,7 @@ int main(void) {
 	unsigned long tri_count = 0;
 	count_tri(BOOM, &tri_count);
 	printf("Tri count: %ld\n", tri_count);
-	free_obj(BOOM);
+	//free_obj(BOOM);
 	
 	
 	
@@ -152,7 +152,9 @@ int main(void) {
 	struct render_t * render_args = (struct render_t *) malloc(sizeof(struct render_t) * THREAD_COUNT);
 	
 	
+	
 	char loop = 1;
+	char update_world = 0;
 	
 	char look_up = 0;
 	char look_down = 0;
@@ -325,12 +327,17 @@ int main(void) {
 		
 		clear_screen(0xFF000000);
 		
-		struct obj_t BANG = make_obj(WORLD.min, WORLD.max, WORLD.map, WORLD.T, WORLD.depth, 0, 0, 0);
+		if (update_world) {
+			free_obj(BOOM);
+			BOOM = make_obj(WORLD.min, WORLD.max, WORLD.map, WORLD.T, WORLD.depth, 0, 0, 0);
+		}
+		
 		
 		// MULTITHREAD RENDERING
 		unsigned long i;
 		for (i = 0; i < THREAD_COUNT; i++) {
-			render_args[i] = (struct render_t) {i, &BANG};
+			//render_args[i] = (struct render_t) {i, &BANG};
+			render_args[i] = (struct render_t) {i, &BOOM};
 			pthread_create(workers + i, NULL, partial_render, render_args + i);
 		}
 		
@@ -338,19 +345,43 @@ int main(void) {
 			pthread_join(workers[i], NULL);
 		}
 		
+		
+		/*
+		// Single Thread Rendering
+		for (unsigned long y = 0; y < VERTICAL_RESOLUTION; y++) {
+			for (unsigned long x = 0; x < HORIZONTAL_RESOLUTION; x++) {
+
+				float yaw = ((float) x - (HORIZONTAL_RESOLUTION - 1) * 0.5f) * (hFOV / HORIZONTAL_RESOLUTION);
+				float pitch = ((float) y - (VERTICAL_RESOLUTION - 1) * 0.5f) * (vFOV / VERTICAL_RESOLUTION);
+
+				struct vec_t axis = vec_normalize(vec_add(vec_scale(camera_up, yaw), vec_scale(camera_right, pitch)));
+
+				float ang = sqrt(yaw*yaw + pitch*pitch);
+
+				struct vec_t direction = vec_normalize(vec_rotate(camera_look, axis, ang));
+
+				float dist = 1000.0f;
+				unsigned int color = 0;
+
+				cals_intersect_ray_obj((struct ray_t) {camera_pos, direction}, &BOOM, &dist, &color);
+
+				draw_pixel(x, y, color);
+
+			}
+		}
+		*/
+		
+		
+		
 		render_NoobSDL();
 		
-		// Free Bang
-		free_obj(BANG);
 		
 	}
 	
 	
-	// Cleanup threading
 	free(render_args);
 	free(workers);
-	
-	// Free World
+	free_obj(BOOM);
 	free_world(WORLD);
 	
 	quit_NoobSDL();

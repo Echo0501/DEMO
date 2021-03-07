@@ -1,6 +1,6 @@
 
 CC = gcc
-CFLAGS = -Wall -pg -O3
+CFLAGS = -Wall -O3
 
 
 all: main
@@ -17,7 +17,7 @@ NoobSDL.o: NoobSDL.c NoobSDL.h
 cube.o: cube.c vec.h geom.h cube.h
 	$(CC) $(CFLAGS) -c $<
 
-geom.o: geom.cpp vec.h geom.h cube.h
+geom.o: geom.c vec.h geom.h cube.h
 	$(CC) $(CFLAGS) -c $< -lm
 
 vec.o: vec.c vec.h

@@ -4,8 +4,6 @@
 #include <math.h>
 #include <time.h>
 
-#include <algorithm>
-
 #include "vec.h"
 #include "geom.h"
 #include "cube.h"
@@ -48,22 +46,26 @@ struct obj_t make_obj(struct vec_t min, struct vec_t max, float *** map, float T
 	
 	if (depth > 0) {
 		
-		float xMin = min.x; float xMax = max.x; float xMid = (xMin + xMax) / 2.0f;
-		float yMin = min.y; float yMax = max.y; float yMid = (yMin + yMax) / 2.0f;
-		float zMin = min.z; float zMax = max.z; float zMid = (zMin + zMax) / 2.0f;
+		float xMin = min.x; float xMax = max.x; float xMid = (xMin + xMax) * 0.5f;
+		float yMin = min.y; float yMax = max.y; float yMid = (yMin + yMax) * 0.5f;
+		float zMin = min.z; float zMax = max.z; float zMid = (zMin + zMax) * 0.5f;
 		
 		unsigned long d = 1 << (depth - 1);
 		
+		unsigned long x2 = x+d;
+		unsigned long y2 = y+d;
+		unsigned long z2 = z+d;
+		
 		rtn.children_count = 8;
 		rtn.children = (struct obj_t *) malloc(sizeof(struct obj_t) * 8);
-		rtn.children[0] = make_obj((struct vec_t) {xMin, yMin, zMin}, (struct vec_t) {xMid, yMid, zMid}, map, T, depth-1, x,   y,   z);
-		rtn.children[1] = make_obj((struct vec_t) {xMid, yMin, zMin}, (struct vec_t) {xMax, yMid, zMid}, map, T, depth-1, x+d, y,   z);
-		rtn.children[2] = make_obj((struct vec_t) {xMin, yMid, zMin}, (struct vec_t) {xMid, yMax, zMid}, map, T, depth-1, x,   y+d, z);
-		rtn.children[3] = make_obj((struct vec_t) {xMid, yMid, zMin}, (struct vec_t) {xMax, yMax, zMid}, map, T, depth-1, x+d, y+d, z);
-		rtn.children[4] = make_obj((struct vec_t) {xMin, yMin, zMid}, (struct vec_t) {xMid, yMid, zMax}, map, T, depth-1, x,   y,   z+d);
-		rtn.children[5] = make_obj((struct vec_t) {xMid, yMin, zMid}, (struct vec_t) {xMax, yMid, zMax}, map, T, depth-1, x+d, y,   z+d);
-		rtn.children[6] = make_obj((struct vec_t) {xMin, yMid, zMid}, (struct vec_t) {xMid, yMax, zMax}, map, T, depth-1, x,   y+d, z+d);
-		rtn.children[7] = make_obj((struct vec_t) {xMid, yMid, zMid}, (struct vec_t) {xMax, yMax, zMax}, map, T, depth-1, x+d, y+d, z+d);
+		rtn.children[0] = make_obj((struct vec_t) {xMin, yMin, zMin}, (struct vec_t) {xMid, yMid, zMid}, map, T, depth-1, x,  y,  z);
+		rtn.children[1] = make_obj((struct vec_t) {xMid, yMin, zMin}, (struct vec_t) {xMax, yMid, zMid}, map, T, depth-1, x2, y,  z);
+		rtn.children[2] = make_obj((struct vec_t) {xMin, yMid, zMin}, (struct vec_t) {xMid, yMax, zMid}, map, T, depth-1, x,  y2, z);
+		rtn.children[3] = make_obj((struct vec_t) {xMid, yMid, zMin}, (struct vec_t) {xMax, yMax, zMid}, map, T, depth-1, x2, y2, z);
+		rtn.children[4] = make_obj((struct vec_t) {xMin, yMin, zMid}, (struct vec_t) {xMid, yMid, zMax}, map, T, depth-1, x,  y,  z2);
+		rtn.children[5] = make_obj((struct vec_t) {xMid, yMin, zMid}, (struct vec_t) {xMax, yMid, zMax}, map, T, depth-1, x2, y,  z2);
+		rtn.children[6] = make_obj((struct vec_t) {xMin, yMid, zMid}, (struct vec_t) {xMid, yMax, zMax}, map, T, depth-1, x,  y2, z2);
+		rtn.children[7] = make_obj((struct vec_t) {xMid, yMid, zMid}, (struct vec_t) {xMax, yMax, zMax}, map, T, depth-1, x2, y2, z2);
 		
 		rtn.content_count = 0;
 		rtn.content = NULL;
@@ -126,15 +128,10 @@ void free_obj(struct obj_t OBJ) {
 
 unsigned int shadow_color(const unsigned int color, const float color_scale) {
 
-	float a = (float)((color >> 24) & 0xFF);
-	float r = (float)((color >> 16) & 0xFF);
-	float g = (float)((color >> 8) & 0xFF);
-	float b = (float)((color >> 0) & 0xFF);
-
-	a *= color_scale;
-	r *= color_scale;
-	g *= color_scale;
-	b *= color_scale;
+	float a = (float)((color >> 24) & 0xFF) * color_scale;
+	float r = (float)((color >> 16) & 0xFF) * color_scale;
+	float g = (float)((color >> 8) & 0xFF) * color_scale;
+	float b = (float)((color >> 0) & 0xFF) * color_scale;
 
 	return ((unsigned int)a << 24) | ((unsigned int)r << 16) | ((unsigned int)g << 8) | ((unsigned int)b);
 
@@ -212,7 +209,7 @@ void ray_box(const struct ray_t RAY, const struct bound_box_t Box, float * tMin,
 	if (t1 < t2) {
 		tmpMin = t1;
 		tmpMax = t2;
-	}else {
+	} else {
 		tmpMin = t2;
 		tmpMax = t1;
 	}
@@ -245,35 +242,48 @@ struct rayboxtmp_t {
 	int index;
 	float min_dist;
 	float max_dist;
+	
+	struct rayboxtmp_t * left;
+	struct rayboxtmp_t * right;
 };
-bool compar(const struct rayboxtmp_t A, const struct rayboxtmp_t B) {
-	return A.min_dist < B.min_dist;
+void raybox_sort(struct rayboxtmp_t * dist_list, const int num) {
+	if (num <= 1) return;
+	int i = 0;
+	for(int j = 1; j < num; j++) {
+		if (dist_list[j].min_dist < dist_list[i].min_dist) {
+			struct rayboxtmp_t tmp = dist_list[j];
+			dist_list[j] = dist_list[i+1];
+			dist_list[i+1] = dist_list[i];
+			dist_list[i] = tmp;
+			i++;
+		}
+	}
+	raybox_sort(dist_list, i);
+	raybox_sort(dist_list + (i + 1), num - (i + 1));
 }
-/*
-int compar(const void * A, const void * B) {
-	return ((struct rayboxtmp_t *) A)->min_dist < ((struct rayboxtmp_t *) B)->min_dist;
-}
-*/
 // Calculates the best intersetion between obj_t and a ray.
 void cals_intersect_ray_obj(const struct ray_t RAY, const struct obj_t * OBJ, float * dist, unsigned int * color) {
 	
 	if (OBJ->children_count > 0) {
+		
 		struct rayboxtmp_t  dist_list[8];
-
+		
 		for(int i = 0; i < 8; i++) {
 			dist_list[i].index = i;
 			ray_box(RAY, OBJ->children[i].box, &(dist_list[i].min_dist), &(dist_list[i].max_dist));
 		}
 		
-		//qsort(dist_list, 8, sizeof(struct rayboxtmp_t), compar);
-		std::sort(dist_list, dist_list+8, compar);
+		raybox_sort(dist_list, 8);
 		
 		// Recursive Calls to children Obj
 		for(int i = 0; i < 8; i++) {
-			if (dist_list[i].min_dist < dist_list[i].max_dist && dist_list[i].min_dist < *dist && dist_list[i].max_dist > 0.0f) {
+			if (dist_list[i].min_dist > *dist) {
+				break;
+			} else if (dist_list[i].min_dist < dist_list[i].max_dist && dist_list[i].min_dist < *dist && dist_list[i].max_dist > 0.0f) {
 				cals_intersect_ray_obj(RAY, OBJ->children + (dist_list[i].index), dist, color);
 			}
 		}
+		
 	} else {
 		// Calls to check triangle contents
 		for(unsigned short i = 0; i < OBJ->content_count; i++) {
