@@ -4,7 +4,20 @@ If you have any questions reguarding anything in this project
 	such as formuas or functions and what not,
 	Email me at duncmccl@udel.edu
 
+CONTROLS
 
+WASD, space and shift controll movement
+	W - forward
+	A - right
+	S - backward
+	D - right
+	space - up
+	shift - down
+
+arrows, q and e control looking
+	Arrows look in the direction
+	Q rolls counter clockwise
+	E rolls clockwise
 
 The program functions generally by:
 
