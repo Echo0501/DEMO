@@ -3,6 +3,10 @@
  * duncmccl@udel.edu
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct bound_box_t {
 	struct vec_t A; 
 	struct vec_t B;
@@ -55,3 +59,7 @@ void free_obj(struct obj_t OBJ);
 
 void cals_intersect_ray_tri(const struct ray_t RAY, const struct triangle_t * TRI, float * dist, unsigned int * color);
 void cals_intersect_ray_obj(const struct ray_t RAY, const struct obj_t * OBJ, float * dist, unsigned int * color);
+
+#ifdef __cplusplus
+}
+#endif

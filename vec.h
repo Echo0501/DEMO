@@ -3,6 +3,10 @@
  * duncmccl@udel.edu
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct vec_t {
 	float x, y, z;
 };
@@ -17,3 +21,7 @@ struct vec_t vec_rotate(struct vec_t A, struct vec_t Axis, float ang);
 struct vec_t vec_normalize(struct vec_t A);
 float vec_dot(struct vec_t A, struct vec_t B);
 float vec_mag(struct vec_t A);
+
+#ifdef __cplusplus
+}
+#endif
