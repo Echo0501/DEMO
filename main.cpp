@@ -34,8 +34,8 @@ struct vec_t camera_right = {1.0, 0.0, 0.0};
 float hFOV = M_PI / 2.0f;
 float vFOV = M_PI / 2.0f;
 
-unsigned long hRes = 128;
-unsigned long vRes = 128;
+unsigned long hRes = 256;
+unsigned long vRes = 256;
 
 float MOVE_SPEED = 0.2f;
 float LOOK_SPEED = (M_PI * 0.025f);
@@ -45,7 +45,7 @@ float LOOK_SPEED = (M_PI * 0.025f);
 
 // Multi Thread stuff
 pthread_t * workers;
-unsigned long THREAD_COUNT = 4;
+unsigned long THREAD_COUNT = 6;
 #define THREAD_STEP (VERTICAL_RESOLUTION / THREAD_COUNT)
 
 struct render_t {
@@ -87,12 +87,14 @@ void *partial_render(void *varg) {
 }
 
 // Counts the number of triangles in an obj_t
-void count_tri(struct obj_t obj, unsigned long * sum) {
+void count_tri(struct obj_t * OBJ, unsigned long * sum) {
 	
-	for(unsigned long i = 0; i < obj.children_count; i++) {
-		count_tri(obj.children[i], sum);
+	if (OBJ == NULL) return;
+	
+	for(unsigned long i = 0; i < OBJ->children_count; i++) {
+		count_tri(OBJ->children[i], sum);
 	}
-	*sum += obj.content_count;
+	*sum += OBJ->content_count;
 }
 
 
@@ -115,7 +117,7 @@ int main(void) {
 	struct world_t WORLD = make_world(
 		(struct vec_t){-25.0, -25.0, -25.0}, 		// MIN
 		(struct vec_t){25.0, 25.0, 25.0}, 	// MAX
-		6, 0.0f);	// Depth, Threshold
+		8, 0.0f);	// Depth, Threshold
 	
 	// Fill the world!
 	for(unsigned long k = 0; k < WORLD.size; k++) {
@@ -137,7 +139,9 @@ int main(void) {
 	// Make obj_t octtree to contain tiangle mesh of the world
 	// Can be updated for every frame, although it only needs to be updated
 	// when changes happen
-	struct obj_t BOOM = make_obj(WORLD.min, WORLD.max, WORLD.map, WORLD.T, WORLD.depth, 0, 0, 0);
+	struct obj_t * BOOM = make_obj(WORLD.min, WORLD.max, WORLD.map, WORLD.T, WORLD.depth, 0, 0, 0);
+	BOOM = prune_obj(BOOM);
+	
 	unsigned long tri_count = 0;
 	count_tri(BOOM, &tri_count);
 	printf("Tri count: %ld\n", tri_count);
@@ -175,7 +179,6 @@ int main(void) {
 	char move_back = 0;
 	char move_right = 0;
 	char move_left = 0;
-	
 	
 	// Main Loop
 	while(loop) {
@@ -336,14 +339,14 @@ int main(void) {
 		if (update_world) {
 			free_obj(BOOM);
 			BOOM = make_obj(WORLD.min, WORLD.max, WORLD.map, WORLD.T, WORLD.depth, 0, 0, 0);
+			BOOM = prune_obj(BOOM);
 		}
 		
 		
 		// MULTITHREAD RENDERING
 		unsigned long i;
 		for (i = 0; i < THREAD_COUNT; i++) {
-			//render_args[i] = (struct render_t) {i, &BANG};
-			render_args[i] = (struct render_t) {i, &BOOM};
+			render_args[i] = (struct render_t) {i, BOOM};
 			pthread_create(workers + i, NULL, partial_render, render_args + i);
 		}
 		
@@ -369,7 +372,7 @@ int main(void) {
 				float dist = 1000.0f;
 				unsigned int color = 0;
 
-				cals_intersect_ray_obj((struct ray_t) {camera_pos, direction}, &BOOM, &dist, &color);
+				cals_intersect_ray_obj((struct ray_t) {camera_pos, direction}, BOOM, &dist, &color);
 
 				draw_pixel(x, y, color);
 
@@ -380,7 +383,6 @@ int main(void) {
 		
 		// Render to screen
 		render_NoobSDL();
-		
 		
 	}
 	

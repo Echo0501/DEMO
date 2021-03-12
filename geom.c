@@ -43,13 +43,13 @@ void free_world(struct world_t WORLD) {
 }
 
 // Makes an obj_t using min, max positions, a map of values, and x, y, z indexies
-struct obj_t make_obj(struct vec_t min, struct vec_t max, float *** map, float T, unsigned long depth, 
+struct obj_t * make_obj(struct vec_t min, struct vec_t max, float *** map, float T, unsigned long depth, 
 			unsigned long x, unsigned long y, unsigned long z) {
 	
 	
-	struct obj_t rtn;
+	struct obj_t * rtn = (struct obj_t *) malloc(sizeof(struct obj_t));
 		
-	rtn.box = (struct bound_box_t) {min, max};
+	rtn->box = (struct bound_box_t) {min, max};
 	
 	if (depth > 0) {
 		
@@ -63,29 +63,29 @@ struct obj_t make_obj(struct vec_t min, struct vec_t max, float *** map, float T
 		unsigned long y2 = y+d;
 		unsigned long z2 = z+d;
 		
-		rtn.children_count = 8;
-		rtn.children = (struct obj_t *) malloc(sizeof(struct obj_t) * 8);
-		rtn.children[0] = make_obj((struct vec_t) {xMin, yMin, zMin}, (struct vec_t) {xMid, yMid, zMid}, map, T, depth-1, x,  y,  z);
-		rtn.children[1] = make_obj((struct vec_t) {xMid, yMin, zMin}, (struct vec_t) {xMax, yMid, zMid}, map, T, depth-1, x2, y,  z);
-		rtn.children[2] = make_obj((struct vec_t) {xMin, yMid, zMin}, (struct vec_t) {xMid, yMax, zMid}, map, T, depth-1, x,  y2, z);
-		rtn.children[3] = make_obj((struct vec_t) {xMid, yMid, zMin}, (struct vec_t) {xMax, yMax, zMid}, map, T, depth-1, x2, y2, z);
-		rtn.children[4] = make_obj((struct vec_t) {xMin, yMin, zMid}, (struct vec_t) {xMid, yMid, zMax}, map, T, depth-1, x,  y,  z2);
-		rtn.children[5] = make_obj((struct vec_t) {xMid, yMin, zMid}, (struct vec_t) {xMax, yMid, zMax}, map, T, depth-1, x2, y,  z2);
-		rtn.children[6] = make_obj((struct vec_t) {xMin, yMid, zMid}, (struct vec_t) {xMid, yMax, zMax}, map, T, depth-1, x,  y2, z2);
-		rtn.children[7] = make_obj((struct vec_t) {xMid, yMid, zMid}, (struct vec_t) {xMax, yMax, zMax}, map, T, depth-1, x2, y2, z2);
+		rtn->children_count = 8;
+		rtn->children = (struct obj_t **) malloc(sizeof(struct obj_t *) * 8);
+		rtn->children[0] = make_obj((struct vec_t) {xMin, yMin, zMin}, (struct vec_t) {xMid, yMid, zMid}, map, T, depth-1, x,  y,  z);
+		rtn->children[1] = make_obj((struct vec_t) {xMid, yMin, zMin}, (struct vec_t) {xMax, yMid, zMid}, map, T, depth-1, x2, y,  z);
+		rtn->children[2] = make_obj((struct vec_t) {xMin, yMid, zMin}, (struct vec_t) {xMid, yMax, zMid}, map, T, depth-1, x,  y2, z);
+		rtn->children[3] = make_obj((struct vec_t) {xMid, yMid, zMin}, (struct vec_t) {xMax, yMax, zMid}, map, T, depth-1, x2, y2, z);
+		rtn->children[4] = make_obj((struct vec_t) {xMin, yMin, zMid}, (struct vec_t) {xMid, yMid, zMax}, map, T, depth-1, x,  y,  z2);
+		rtn->children[5] = make_obj((struct vec_t) {xMid, yMin, zMid}, (struct vec_t) {xMax, yMid, zMax}, map, T, depth-1, x2, y,  z2);
+		rtn->children[6] = make_obj((struct vec_t) {xMin, yMid, zMid}, (struct vec_t) {xMid, yMax, zMax}, map, T, depth-1, x,  y2, z2);
+		rtn->children[7] = make_obj((struct vec_t) {xMid, yMid, zMid}, (struct vec_t) {xMax, yMax, zMax}, map, T, depth-1, x2, y2, z2);
 		
-		rtn.content_count = 0;
-		rtn.content = NULL;
+		rtn->content_count = 0;
+		rtn->content = NULL;
 		
 		return rtn;
 		
 	} else {
 		
-		rtn.children_count = 0;
-		rtn.children = NULL;
+		rtn->children_count = 0;
+		rtn->children = NULL;
 		
-		rtn.content_count = 0;
-		rtn.content = NULL;
+		rtn->content_count = 0;
+		rtn->content = NULL;
 		
 		marching_cube(map[x  ][y  ][z], 
 					  map[x+1][y  ][z], 
@@ -96,20 +96,20 @@ struct obj_t make_obj(struct vec_t min, struct vec_t max, float *** map, float T
 					  map[x  ][y+1][z+1], 
 					  map[x+1][y+1][z+1], 
 					  T, 
-					  &rtn.content, &rtn.content_count);
+					  &rtn->content, &rtn->content_count);
 		
 		struct vec_t delta = (struct vec_t){(max.x - min.x), (max.y - min.y), (max.z - min.z)};
 		
-		for(unsigned short i = 0; i < rtn.content_count; i++) {
-			rtn.content[i].A = (struct vec_t) {min.x + delta.x * rtn.content[i].A.x,
-											  min.y + delta.y * rtn.content[i].A.y,
-											  min.z + delta.z * rtn.content[i].A.z};
-			rtn.content[i].B = (struct vec_t) {min.x + delta.x * rtn.content[i].B.x,
-											  min.y + delta.y * rtn.content[i].B.y,
-											  min.z + delta.z * rtn.content[i].B.z};
-			rtn.content[i].C = (struct vec_t) {min.x + delta.x * rtn.content[i].C.x,
-											  min.y + delta.y * rtn.content[i].C.y,
-											  min.z + delta.z * rtn.content[i].C.z};
+		for(unsigned short i = 0; i < rtn->content_count; i++) {
+			rtn->content[i].A = (struct vec_t) {min.x + delta.x * rtn->content[i].A.x,
+											  min.y + delta.y * rtn->content[i].A.y,
+											  min.z + delta.z * rtn->content[i].A.z};
+			rtn->content[i].B = (struct vec_t) {min.x + delta.x * rtn->content[i].B.x,
+											  min.y + delta.y * rtn->content[i].B.y,
+											  min.z + delta.z * rtn->content[i].B.z};
+			rtn->content[i].C = (struct vec_t) {min.x + delta.x * rtn->content[i].C.x,
+											  min.y + delta.y * rtn->content[i].C.y,
+											  min.z + delta.z * rtn->content[i].C.z};
 			
 		}
 		
@@ -118,18 +118,42 @@ struct obj_t make_obj(struct vec_t min, struct vec_t max, float *** map, float T
 
 }
 
-// frees a obj_t
-void free_obj(struct obj_t OBJ) {
+struct obj_t * prune_obj(struct obj_t * OBJ) {
 	
-	if(OBJ.children_count > 0) {
-		for(unsigned short i = 0; i < OBJ.children_count; i++) {
-			free_obj(OBJ.children[i]);
+	if (OBJ == NULL) return NULL;
+	
+	if (OBJ->children_count > 0) {
+		for(int i = 0; i < 8; i++) {
+			OBJ->children[i] = prune_obj(OBJ->children[i]);
+			if (OBJ->children[i] == NULL) {
+				OBJ->children_count--;
+			}
 		}
-		free(OBJ.children);
 	}
-	if(OBJ.content_count > 0) {
-		free(OBJ.content);
+	
+	if (OBJ->children_count == 0 && OBJ->content_count == 0) {
+		free_obj(OBJ);
+		return NULL;
+	} else {
+		return OBJ;
 	}
+}
+
+// frees a obj_t
+void free_obj(struct obj_t * OBJ) {
+	
+	if (OBJ == NULL) return;
+	
+	if(OBJ->children_count > 0) {
+		for(unsigned short i = 0; i < 8; i++) {
+			free_obj(OBJ->children[i]);
+		}
+		free(OBJ->children);
+	}
+	if(OBJ->content_count > 0) {
+		free(OBJ->content);
+	}
+	free(OBJ);
 }
 
 // makes a color darker by using color_scale value
@@ -234,68 +258,116 @@ void ray_box(const struct ray_t RAY, const struct bound_box_t Box, float * tMin,
 		if (t5 < tmpMax) tmpMax = t5;
 	}
 	
-	if (tmpMax > 0.0 && tmpMin < tmpMax) {
-		*tMin = tmpMin;
-		*tMax = tmpMax;
-	} else {
-		*tMin = 100000.0;
-		*tMax = -1000000.0;
-	}
+	*tMin = tmpMin;
+	*tMax = tmpMax;
 	
 }
 
-// Struct to record the distances between a ray and a box, 
-// along with the index of that box in an obj.
-// This struct is only used in calc_intersect_ray_obj;
-struct rayboxtmp_t {
-	int index;
-	float min_dist;
-	float max_dist;
-	
-	struct rayboxtmp_t * left;
-	struct rayboxtmp_t * right;
+const unsigned int search_order[48][8] = {
+	{7,6,5,4,3,2,1,0},
+	{6,7,4,5,2,3,0,1},
+	{5,4,7,6,1,0,3,2},
+	{4,5,6,7,0,1,2,3},
+	{3,2,1,0,7,6,5,4},
+	{2,3,0,1,6,7,4,5},
+	{1,0,3,2,5,4,7,6},
+	{0,1,2,3,4,5,6,7},
+	{7,6,3,2,5,4,1,0},
+	{6,7,2,3,4,5,0,1},
+	{5,4,1,0,7,6,3,2},
+	{4,5,0,1,6,7,2,3},
+	{3,2,7,6,1,0,5,4},
+	{2,3,6,7,0,1,4,5},
+	{1,0,5,4,3,2,7,6},
+	{0,1,4,5,2,3,6,7},
+	{7,5,6,4,3,1,2,0},
+	{6,4,7,5,0,2,3,1},
+	{5,7,4,6,1,3,0,2},
+	{4,6,5,7,0,2,1,3},
+	{3,1,2,0,7,5,6,4},
+	{2,0,3,1,6,4,7,5},
+	{1,3,0,2,5,7,4,6},
+	{0,2,1,3,4,6,5,7},
+	{7,5,3,1,6,4,2,0},
+	{6,4,0,2,7,5,3,1},
+	{5,7,1,3,4,6,0,2},
+	{4,6,0,2,5,7,1,3},
+	{3,1,7,5,2,0,6,4},
+	{2,0,6,4,3,1,7,5},
+	{1,3,5,7,0,2,4,6},
+	{0,2,6,4,1,3,5,7},
+	{7,3,6,2,5,1,4,0},
+	{6,2,7,3,4,0,5,1},
+	{5,1,4,0,7,3,6,2},
+	{4,0,5,1,6,2,7,3},
+	{3,7,2,6,1,5,0,4},
+	{2,6,3,7,0,4,1,5},
+	{1,5,0,4,3,7,2,6},
+	{0,4,1,5,2,6,3,7},
+	{7,3,5,1,6,2,4,0},
+	{6,2,4,0,7,3,5,1},
+	{5,1,7,3,4,0,6,2},
+	{4,0,6,2,5,1,7,3},
+	{3,7,1,5,2,6,0,4},
+	{2,6,0,4,3,7,1,5},
+	{1,5,3,7,0,4,2,6},
+	{0,4,2,6,1,5,3,7}
 };
-
-// This function sorts a list of ray box intersects, closest first, with quick sort
-void raybox_sort(struct rayboxtmp_t * dist_list, const int num) {
-	if (num <= 1) return;
-	int i = 0;
-	for(int j = 1; j < num; j++) {
-		if (dist_list[j].min_dist < dist_list[i].min_dist) {
-			struct rayboxtmp_t tmp = dist_list[j];
-			dist_list[j] = dist_list[i+1];
-			dist_list[i+1] = dist_list[i];
-			dist_list[i] = tmp;
-			i++;
-		}
-	}
-	raybox_sort(dist_list, i);
-	raybox_sort(dist_list + (i + 1), num - (i + 1));
-}
 
 // Calculates the best intersetion between obj_t and a ray.
 // Recursive call to either more calc_ray_obj, or calc_ray_triangle
 // Returns values by writting them to pointers, dist and color.
 void cals_intersect_ray_obj(const struct ray_t RAY, const struct obj_t * OBJ, float * dist, unsigned int * color) {
 	
+	if (OBJ == NULL) return;
+	
+	float tmp_min = 1.0;
+	float tmp_max = -1.0;
+	
+	ray_box(RAY, OBJ->box, &tmp_min, &tmp_max);
+	
+	if (tmp_max < 0.0 || tmp_max < tmp_min || tmp_min > *dist) return;
+	
 	if (OBJ->children_count > 0) {
 		
-		struct rayboxtmp_t  dist_list[8];
-		
-		for(int i = 0; i < 8; i++) {
-			dist_list[i].index = i;
-			ray_box(RAY, OBJ->children[i].box, &(dist_list[i].min_dist), &(dist_list[i].max_dist));
+		struct vec_t dir = RAY.Direction;
+
+		float x = dir.x;
+		float y = dir.y;
+		float z = dir.z;
+
+		float x2 = x*x;
+		float y2 = y*y;
+		float z2 = z*z;
+
+		unsigned short state = 0;
+
+		if (x >= 0.0) state |= 1;
+		if (y >= 0.0) state |= 2;
+		if (z >= 0.0) state |= 4;
+
+		if (x2 >= y2 && x2 >= z2) {
+			if (y2 >= z2) {
+				state |= 0;
+			} else {
+				state |= 8;
+			}
+		} else if (y2 >= x2 && y2 >= z2) {
+			if (x2 >= z2) {
+				state |= 16;
+			} else {
+				state |= 24;
+			}
+		} else if (z2 >= x2 && z2 >= y2) {
+			if (x2 >= y2) {
+				state |= 32;
+			} else {
+				state |= 40;
+			}
 		}
 		
-		raybox_sort(dist_list, 8);
-		
-		// Recursive Calls to children Obj
-		for(int i = 0; i < 8; i++) {
-			if (dist_list[i].min_dist > *dist) {
-				break;
-			} else if (dist_list[i].min_dist < dist_list[i].max_dist && dist_list[i].min_dist < *dist && dist_list[i].max_dist > 0.0f) {
-				cals_intersect_ray_obj(RAY, OBJ->children + (dist_list[i].index), dist, color);
-			}
+		for(unsigned int i = 0; i < 8; i++) {
+			cals_intersect_ray_obj(RAY, OBJ->children[search_order[state][i]], dist, color);
 		}
 		
 	} else {
