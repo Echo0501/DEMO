@@ -340,6 +340,7 @@ int main(void) {
 			free_obj(BOOM);
 			BOOM = make_obj(WORLD.min, WORLD.max, WORLD.map, WORLD.T, WORLD.depth, 0, 0, 0);
 			BOOM = prune_obj(BOOM);
+			update_world = 0;
 		}
 		
 		

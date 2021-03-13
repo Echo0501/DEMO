@@ -330,15 +330,13 @@ void cals_intersect_ray_obj(const struct ray_t RAY, const struct obj_t * OBJ, fl
 	
 	if (OBJ->children_count > 0) {
 		
-		struct vec_t dir = RAY.Direction;
+		float x = RAY.Direction.x;
+		float y = RAY.Direction.y;
+		float z = RAY.Direction.z;
 
-		float x = dir.x;
-		float y = dir.y;
-		float z = dir.z;
-
-		float x2 = x*x;
-		float y2 = y*y;
-		float z2 = z*z;
+		float x2 = fabs(x);
+		float y2 = fabs(y);
+		float z2 = fabs(z);
 
 		unsigned short state = 0;
 
