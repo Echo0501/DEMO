@@ -123,19 +123,22 @@ struct obj_t * prune_obj(struct obj_t * OBJ) {
 	if (OBJ == NULL) return NULL;
 	
 	if (OBJ->children_count > 0) {
-		for(int i = 0; i < 8; i++) {
+		for(unsigned long i = 0; i < 8; i++) {
 			OBJ->children[i] = prune_obj(OBJ->children[i]);
 			if (OBJ->children[i] == NULL) {
 				OBJ->children_count--;
 			}
 		}
 	}
-	
-	if (OBJ->children_count == 0 && OBJ->content_count == 0) {
-		free_obj(OBJ);
-		return NULL;
-	} else {
+	if (OBJ->children_count == 0 && OBJ->children) {
+		free(OBJ->children);
+		OBJ->children = NULL;
+	}
+	if (OBJ->children_count || OBJ->content) {
 		return OBJ;
+	} else {
+		free(OBJ);
+		return NULL;
 	}
 }
 
@@ -144,13 +147,14 @@ void free_obj(struct obj_t * OBJ) {
 	
 	if (OBJ == NULL) return;
 	
-	if(OBJ->children_count > 0) {
+	if (OBJ->children) {
 		for(unsigned short i = 0; i < 8; i++) {
 			free_obj(OBJ->children[i]);
 		}
 		free(OBJ->children);
 	}
-	if(OBJ->content_count > 0) {
+	
+	if(OBJ->content) {
 		free(OBJ->content);
 	}
 	free(OBJ);
@@ -334,9 +338,9 @@ void cals_intersect_ray_obj(const struct ray_t RAY, const struct obj_t * OBJ, fl
 		float y = RAY.Direction.y;
 		float z = RAY.Direction.z;
 
-		float x2 = fabs(x);
-		float y2 = fabs(y);
-		float z2 = fabs(z);
+		float x2 = x*x;
+		float y2 = y*y;
+		float z2 = z*z;
 
 		unsigned short state = 0;
 

@@ -111,13 +111,13 @@ int main(void) {
 	// OpenSimplexNoise, for noisey world
 	// This is the only cpp I've used, and only reason for me making main a .cpp file
 	OpenSimplexNoise::Noise N = OpenSimplexNoise::Noise(time(NULL));
-	struct vec_t scalar = {10.0, 10.0, 10.0};
+	struct vec_t scalar = {5.0, 5.0, 5.0};
 	
 	// Make the world!
 	struct world_t WORLD = make_world(
-		(struct vec_t){-25.0, -25.0, -25.0}, 		// MIN
-		(struct vec_t){25.0, 25.0, 25.0}, 	// MAX
-		8, 0.0f);	// Depth, Threshold
+		(struct vec_t){-10.0, -10.0, -10.0}, 		// MIN
+		(struct vec_t){10.0, 10.0, 10.0}, 	// MAX
+		6, 0.0f);	// Depth, Threshold
 	
 	// Fill the world!
 	for(unsigned long k = 0; k < WORLD.size; k++) {
@@ -160,7 +160,9 @@ int main(void) {
 	// - - - - - //
 	workers = (pthread_t *) malloc(sizeof(pthread_t) * THREAD_COUNT);
 	struct render_t * render_args = (struct render_t *) malloc(sizeof(struct render_t) * THREAD_COUNT);
-	
+	for(unsigned long i = 0; i < THREAD_COUNT; i++) {
+		render_args[i] = (struct render_t) {i, BOOM};
+	}
 	
 	// Values for input handling
 	char loop = 1;
@@ -283,22 +285,34 @@ int main(void) {
 		// Looking around
 		struct vec_t axis = (struct vec_t) {0,0,0};
 		if (look_up) {
-			axis = vec_sub(axis, camera_right);
+			axis.x -= camera_right.x;
+			axis.y -= camera_right.y;
+			axis.z -= camera_right.z;
 		}
 		if (look_down) {
-			axis = vec_add(axis, camera_right);
+			axis.x += camera_right.x;
+			axis.y += camera_right.y;
+			axis.z += camera_right.z;
 		}
 		if (look_left) {
-			axis = vec_sub(axis, camera_up);
+			axis.x -= camera_up.x;
+			axis.y -= camera_up.y;
+			axis.z -= camera_up.z;
 		}
 		if (look_right) {
-			axis = vec_add(axis, camera_up);
+			axis.x += camera_up.x;
+			axis.y += camera_up.y;
+			axis.z += camera_up.z;
 		}
 		if (roll_right) {
-			axis = vec_sub(axis, camera_look);
+			axis.x -= camera_look.x;
+			axis.y -= camera_look.y;
+			axis.z -= camera_look.z;
 		}
 		if (roll_left) {
-			axis = vec_add(axis, camera_look);
+			axis.x += camera_look.x;
+			axis.y += camera_look.y;
+			axis.z += camera_look.z;
 		}
 		if (vec_mag(axis) > 0.001f) {
 			axis = vec_normalize(axis);
@@ -310,31 +324,47 @@ int main(void) {
 		// Moving around
 		struct vec_t move_step = (struct vec_t) {0,0,0};
 		if (move_forward) {
-			move_step = vec_add(move_step, camera_look);
+			move_step.x += camera_look.x;
+			move_step.y += camera_look.y;
+			move_step.z += camera_look.z;
 		}
 		if (move_back) {
-			move_step = vec_sub(move_step, camera_look);
+			move_step.x -= camera_look.x;
+			move_step.y -= camera_look.y;
+			move_step.z -= camera_look.z;
 		}
 		if (move_right) {
-			move_step = vec_add(move_step, camera_right);
+			move_step.x += camera_right.x;
+			move_step.y += camera_right.y;
+			move_step.z += camera_right.z;
 		}
 		if (move_left) {
-			move_step = vec_sub(move_step, camera_right);
+			move_step.x -= camera_right.x;
+			move_step.y -= camera_right.y;
+			move_step.z -= camera_right.z;
 		}
 		if (move_up) {
-			move_step = vec_add(move_step, camera_up);
+			move_step.x += camera_up.x;
+			move_step.y += camera_up.y;
+			move_step.z += camera_up.z;
 		}
 		if (move_down) {
-			move_step = vec_sub(move_step, camera_up);
+			move_step.x -= camera_up.x;
+			move_step.y -= camera_up.y;
+			move_step.z -= camera_up.z;
 		}
 		if (vec_mag(move_step) > 0.001f) {
-			camera_pos = vec_add(camera_pos, vec_scale(vec_normalize(move_step), MOVE_SPEED));
+			move_step = vec_normalize(move_step);
+			camera_pos.x += move_step.x * MOVE_SPEED;
+			camera_pos.y += move_step.y * MOVE_SPEED;
+			camera_pos.z += move_step.z * MOVE_SPEED;
 		}
 		
 		
 		// Screen Rendering
 		
 		clear_screen(0xFF000000);
+		
 		
 		if (update_world) {
 			free_obj(BOOM);
@@ -343,43 +373,40 @@ int main(void) {
 			update_world = 0;
 		}
 		
-		
-		// MULTITHREAD RENDERING
-		unsigned long i;
-		for (i = 0; i < THREAD_COUNT; i++) {
-			render_args[i] = (struct render_t) {i, BOOM};
-			pthread_create(workers + i, NULL, partial_render, render_args + i);
-		}
-		
-		for (i = 0; i < THREAD_COUNT; i++) {
-			pthread_join(workers[i], NULL);
-		}
-		
-		
-		/*
-		// Single Thread Rendering
-		for (unsigned long y = 0; y < VERTICAL_RESOLUTION; y++) {
-			for (unsigned long x = 0; x < HORIZONTAL_RESOLUTION; x++) {
+		if (1) { // Multithread or no?
+			// MULTITHREAD RENDERING
+			unsigned long i;
+			for (i = 0; i < THREAD_COUNT; i++) {
+				pthread_create(workers + i, NULL, partial_render, render_args + i);
+			}
 
-				float yaw = ((float) x - (HORIZONTAL_RESOLUTION - 1) * 0.5f) * (hFOV / HORIZONTAL_RESOLUTION);
-				float pitch = ((float) y - (VERTICAL_RESOLUTION - 1) * 0.5f) * (vFOV / VERTICAL_RESOLUTION);
+			for (i = 0; i < THREAD_COUNT; i++) {
+				pthread_join(workers[i], NULL);
+			}
+		} else {
+			// Single Thread Rendering
+			for (unsigned long y = 0; y < VERTICAL_RESOLUTION; y++) {
+				for (unsigned long x = 0; x < HORIZONTAL_RESOLUTION; x++) {
 
-				struct vec_t axis = vec_normalize(vec_add(vec_scale(camera_up, yaw), vec_scale(camera_right, pitch)));
+					float yaw = ((float) x - (HORIZONTAL_RESOLUTION - 1) * 0.5f) * (hFOV / HORIZONTAL_RESOLUTION);
+					float pitch = ((float) y - (VERTICAL_RESOLUTION - 1) * 0.5f) * (vFOV / VERTICAL_RESOLUTION);
 
-				float ang = sqrt(yaw*yaw + pitch*pitch);
+					struct vec_t axis = vec_normalize(vec_add(vec_scale(camera_up, yaw), vec_scale(camera_right, pitch)));
 
-				struct vec_t direction = vec_normalize(vec_rotate(camera_look, axis, ang));
+					float ang = sqrt(yaw*yaw + pitch*pitch);
 
-				float dist = 1000.0f;
-				unsigned int color = 0;
+					struct vec_t direction = vec_normalize(vec_rotate(camera_look, axis, ang));
 
-				cals_intersect_ray_obj((struct ray_t) {camera_pos, direction}, BOOM, &dist, &color);
+					float dist = 1000.0f;
+					unsigned int color = 0;
 
-				draw_pixel(x, y, color);
+					cals_intersect_ray_obj((struct ray_t) {camera_pos, direction}, BOOM, &dist, &color);
 
+					draw_pixel(x, y, color);
+
+				}
 			}
 		}
-		*/
 		
 		
 		// Render to screen
